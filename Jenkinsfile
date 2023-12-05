@@ -1,59 +1,35 @@
 pipeline {
-  agent {
-      node {
-          label 'main'
-      }
-  }
-  options {
-      buildDiscarder logRotator( 
-                daysToKeepStr: '16', 
-                numToKeepStr: '10'
-          )
-  }
-  stages {
-      stage('Cleanup Workspace') {
-          steps {
-              cleanWs()
-              sh """
-              echo "Cleaned Up Workspace For Project"
-              """
-          }
-      }
-      stage('Code Checkout') {
-          steps {
-              checkout([
-                $class: 'GitSCM', 
-                branches: [[name: '*/main']], 
-                userRemoteConfigs: [[url: 'https://github.com/spring-projects/spring-petclinic.git']]
-              ])
-          }
-      }
-      stage(' Unit Testing') {
-          steps {
-              sh """
-              echo "Running Unit Tests"
-              """
-          }
-      }
-      stage('Code Analysis') {
-          steps {
-              sh """
-              echo "Running Code Analysis"
-              """
-          }
-      }
-      stage('Build Deploy Code') {
-          when {
-              branch 'develop'
-          }
-          steps {
-              sh """
-              echo "Building Artifact"
-              """
-              sh """
-              echo "Deploying Code"
-              """
-          }
-      }
-  } 
+    agent any
+    tools{
+        nodejs "nodejs21"
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: "main", url: 'https://github.com/GitGert/KoodJohviCICD'
+            }
+        }
+        stage('npm install') {
+            steps {
+                 sh 'npm install'
+            }
+        }
+        
+        stage('Build') {
+            steps {
+                sh 'npm run build'
+            }
+        }
+        stage('deploy to server') {
+            steps {
+                sh 'mkdir -p /kj_deployments/Gert'
+            }
+        }
+        stage('Deploy') {
+           steps {
+               // Copy the built files to the subdirectory
+               sh "cp -r dist/kood-johvi-cicd/browser/* /kj_deployments/Gert"
+           }
+       }
+    }
 }
